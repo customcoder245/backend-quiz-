@@ -15,10 +15,10 @@ if (process.env.NODE_ENV !== 'production') {
 // Connect to Database
 connectDB()
     .then(() => {
-        console.log("Connected to database...");
+        console.log("Database connection established on startup");
     })
     .catch((err) => {
-        console.log("MONGO db connection failed !!! ", err);
+        console.error("Critical: Initial database connection failed", err);
     });
 
 // Only listen locally. Vercel handles this automatically in production.
