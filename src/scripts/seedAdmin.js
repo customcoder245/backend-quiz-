@@ -11,8 +11,8 @@ dns.setServers(["8.8.8.8", "8.8.4.4"]);
 
 dotenv.config();
 
-const EMAIL = "user@quiz.com";
-const PASSWORD = "password123";
+const EMAIL = "customcoder245@gmail.com";
+const PASSWORD = "Testuser@99";
 
 const seedUser = async () => {
   try {
