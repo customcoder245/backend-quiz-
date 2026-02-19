@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 
 import authRoutes from "./routes/auth.routes.js"
+import questionRoutes from "./routes/question.routes.js"
 
 const app = express();
 
@@ -22,5 +23,6 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/v1/auth", authRoutes);
+app.use("/api/v1/questions", questionRoutes);
 
 export { app };
