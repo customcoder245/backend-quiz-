@@ -1,5 +1,6 @@
 import Question from "../models/question.model.js";
 import UserResponse from "../models/userResponse.model.js";
+import User from "../models/user.model.js";
 
 // ─── QUESTION CRUD ───────────────────────────────────────────
 
@@ -70,7 +71,26 @@ export const deleteQuestion = async (req, res) => {
 export const saveUserResponses = async (req, res) => {
     try {
         const userId = req.user.userId;
-        const { responses, completed } = req.body;
+        const { responses, completed, gender } = req.body;
+
+        // Fetch user to check role and update gender
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        // ADMIN CHECK: Admins cannot take the quiz
+        if (user.role === "admin") {
+            return res.status(403).json({
+                message: "Admins cannot participate in the assessment. Please use the dashboard."
+            });
+        }
+
+        // If gender is provided, update it
+        if (gender) {
+            user.gender = gender;
+            await user.save();
+        }
 
         const userResponse = await UserResponse.findOneAndUpdate(
             { userId },

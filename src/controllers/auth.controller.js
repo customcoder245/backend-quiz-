@@ -55,6 +55,8 @@ export const login = async (req, res) => {
         firstName: user.firstName,
         middleInitial: user.middleInitial,
         lastName: user.lastName,
+        role: user.role,
+        gender: user.gender,
       },
     });
   } catch (error) {

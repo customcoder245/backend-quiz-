@@ -13,9 +13,9 @@ import { protect } from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
 
-// ─── QUESTION CRUD (protected) ───────────────────────
-router.get("/", protect, getAllQuestions);           // GET /api/v1/questions?gender=male
-router.get("/:id", protect, getQuestionById);       // GET /api/v1/questions/:id
+// ─── QUESTION CRUD ───────────────────────────────────────────
+router.get("/", getAllQuestions);            // GET /api/v1/questions (Public)
+router.get("/:id", getQuestionById);        // GET /api/v1/questions/:id (Public)
 router.post("/", protect, createQuestion);           // POST /api/v1/questions
 router.put("/:id", protect, updateQuestion);         // PUT /api/v1/questions/:id
 router.delete("/:id", protect, deleteQuestion);      // DELETE /api/v1/questions/:id

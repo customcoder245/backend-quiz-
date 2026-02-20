@@ -26,6 +26,16 @@ const userSchema = new Schema({
         required: false,
         trim: true,
     },
+    role: {
+        type: String,
+        enum: ["user", "admin"],
+        default: "user",
+    },
+    gender: {
+        type: String,
+        enum: ["male", "female", "other"],
+        required: false,
+    },
 });
 
 export default mongoose.model("User", userSchema);
