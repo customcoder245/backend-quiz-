@@ -10,17 +10,8 @@ dotenv.config();
 
 const questions = [
     {
-        order: 1,
-        questionText: "Select your gender to begin",
-        type: "single-select",
-        gender: "both",
-        options: [
-            { text: "Male", emoji: "👨" },
-            { text: "Female", emoji: "👩" },
-        ],
-    },
-    {
         order: 2,
+        
         questionText: "How old are you?",
         type: "single-select",
         gender: "both",

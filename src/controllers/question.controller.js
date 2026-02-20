@@ -123,6 +123,44 @@ export const getUserResponses = async (req, res) => {
     }
 };
 
+// POST public submission of assessment
+export const submitAssessment = async (req, res) => {
+    try {
+        const { email, firstName, responses, gender } = req.body;
+
+        if (!email) {
+            return res.status(400).json({ message: "Email is required" });
+        }
+
+        // Find or create user internally (since we removed explicit register)
+        let user = await User.findOne({ email });
+
+        if (!user) {
+            user = await User.create({
+                email,
+                firstName: firstName || "Guest",
+                gender: gender || "both",
+                password: Math.random().toString(36).slice(-8) + "!", // Random temp password
+                role: "user"
+            });
+        }
+
+        const userResponse = await UserResponse.findOneAndUpdate(
+            { userId: user._id },
+            {
+                userId: user._id,
+                responses,
+                completedAt: new Date(),
+            },
+            { upsert: true, new: true, runValidators: true }
+        );
+
+        return res.status(200).json({ message: "Assessment submitted", userResponse });
+    } catch (error) {
+        return res.status(500).json({ message: "Server error", error: error.message });
+    }
+};
+
 // DELETE user's responses (reset quiz)
 export const deleteUserResponses = async (req, res) => {
     try {
