@@ -15,18 +15,18 @@ import { protect } from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
 
-// ─── QUESTION CRUD ───────────────────────────────────────────
-router.get("/", getAllQuestions);            // GET /api/v1/questions (Public)
-router.get("/:id", getQuestionById);        // GET /api/v1/questions/:id (Public)
-router.post("/", protect, createQuestion);           // POST /api/v1/questions
-router.put("/:id", protect, updateQuestion);         // PUT /api/v1/questions/:id
-router.delete("/:id", protect, deleteQuestion);      // DELETE /api/v1/questions/:id
-
-// ─── USER RESPONSES (protected/public) ──────────────
+// ─── USER RESPONSES (protected/public) ─────────────────────────
 router.post("/submit", submitAssessment);                      // POST /api/v1/questions/submit (Public)
-router.get("/submissions", protect, getAllSubmissions);       // GET /api/v1/questions/submissions (Admin)
+router.get("/submissions", protect, getAllSubmissions);        // GET /api/v1/questions/submissions (Admin)
 router.post("/responses/save", protect, saveUserResponses);    // POST /api/v1/questions/responses/save
 router.get("/responses/me", protect, getUserResponses);        // GET /api/v1/questions/responses/me
 router.delete("/responses/me", protect, deleteUserResponses);  // DELETE /api/v1/questions/responses/me
+
+// ─── QUESTION CRUD ───────────────────────────────────────────
+router.get("/", getAllQuestions);            // GET /api/v1/questions (Public)
+router.post("/", protect, createQuestion);   // POST /api/v1/questions (Admin)
+router.get("/:id", getQuestionById);        // GET /api/v1/questions/:id (Public)
+router.put("/:id", protect, updateQuestion); // PUT /api/v1/questions/:id (Admin)
+router.delete("/:id", protect, deleteQuestion); // DELETE /api/v1/questions/:id (Admin)
 
 export default router;
