@@ -22,9 +22,9 @@ router.put("/:id", protect, updateQuestion);         // PUT /api/v1/questions/:i
 router.delete("/:id", protect, deleteQuestion);      // DELETE /api/v1/questions/:id
 
 // ─── USER RESPONSES (protected) ──────────────────────
-router.post("/submit", submitAssessment);                      // POST /api/v1/questions/submit (Public)
+// router.post("/submit", submitAssessment);                      // POST /api/v1/questions/submit (Public)
 router.post("/responses/save", protect, saveUserResponses);    // POST /api/v1/questions/responses/save
-router.get("/responses/me", protect, getUserResponses);        // GET /api/v1/questions/responses/me
+ router.get("/responses/me", protect, getUserResponses);        // GET /api/v1/questions/responses/me
 router.delete("/responses/me", protect, deleteUserResponses);  // DELETE /api/v1/questions/responses/me
 
 export default router;

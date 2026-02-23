@@ -19,12 +19,16 @@ const questionSchema = new Schema(
             type: String,
             required: true,
         },
-        // single-select | multi-select | text-input | number-input
+        // single-select | multi-select | text-input | number-input | breakpoint
         type: {
             type: String,
-            enum: ["single-select", "multi-select", "text-input", "number-input"],
+            enum: ["single-select", "multi-select", "text-input", "number-input", "breakpoint"],
             required: true,
         },
+        // For breakpoint type
+        customHtml: { type: String, default: "" },
+        customCss: { type: String, default: "" },
+        customJs: { type: String, default: "" },
         // 'both' | 'male' | 'female' — for gender-specific questions
         gender: {
             type: String,
