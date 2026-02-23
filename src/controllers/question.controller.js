@@ -7,9 +7,11 @@ import User from "../models/user.model.js";
 // GET all questions (optionally filter by gender)
 export const getAllQuestions = async (req, res) => {
     try {
-        const { gender } = req.query; // ?gender=male or ?gender=female
-        const filter = { isActive: true };
-        if (gender) {
+        const { gender, includeInactive } = req.query;
+        // If includeInactive is true, show all. Otherwise only active.
+        const filter = includeInactive === 'true' ? {} : { isActive: true };
+
+        if (gender && gender !== 'all' && gender !== 'both') {
             filter.$or = [{ gender: "both" }, { gender }];
         }
         const questions = await Question.find(filter).sort({ order: 1 });
@@ -156,6 +158,31 @@ export const submitAssessment = async (req, res) => {
         );
 
         return res.status(200).json({ message: "Assessment submitted", userResponse });
+    } catch (error) {
+        return res.status(500).json({ message: "Server error", error: error.message });
+    }
+};
+
+// GET all assessment submissions (Admin only)
+export const getAllSubmissions = async (req, res) => {
+    try {
+        const submissions = await UserResponse.find()
+            .populate("userId", "firstName email gender")
+            .populate("responses.questionId", "questionText")
+            .sort({ createdAt: -1 });
+
+        const formattedSubmissions = submissions.map((sub) => ({
+            id: sub._id,
+            name: sub.userId?.firstName || "Guest",
+            email: sub.userId?.email || "N/A",
+            gender: sub.userId?.gender || "N/A",
+            date: sub.completedAt ? new Date(sub.completedAt).toLocaleDateString() : "In Progress",
+            // For simplicity in the table, we'll join the first few responses
+            questions: sub.responses.map(r => r.questionId?.questionText).filter(Boolean).slice(0, 2).join(", ") + "...",
+            selectedOptions: sub.responses.map(r => Array.isArray(r.answer) ? r.answer.join(", ") : r.answer).slice(0, 2).join(" | ") + "...",
+        }));
+
+        return res.status(200).json({ submissions: formattedSubmissions });
     } catch (error) {
         return res.status(500).json({ message: "Server error", error: error.message });
     }

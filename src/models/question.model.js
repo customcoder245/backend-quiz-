@@ -13,7 +13,6 @@ const questionSchema = new Schema(
         order: {
             type: Number,
             required: true,
-            unique: true,
         },
         questionText: {
             type: String,

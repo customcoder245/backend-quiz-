@@ -9,6 +9,7 @@ import {
     submitAssessment,
     getUserResponses,
     deleteUserResponses,
+    getAllSubmissions,
 } from "../controllers/question.controller.js";
 import { protect } from "../middlewares/auth.middleware.js";
 
@@ -21,10 +22,11 @@ router.post("/", protect, createQuestion);           // POST /api/v1/questions
 router.put("/:id", protect, updateQuestion);         // PUT /api/v1/questions/:id
 router.delete("/:id", protect, deleteQuestion);      // DELETE /api/v1/questions/:id
 
-// ─── USER RESPONSES (protected) ──────────────────────
-// router.post("/submit", submitAssessment);                      // POST /api/v1/questions/submit (Public)
+// ─── USER RESPONSES (protected/public) ──────────────
+router.post("/submit", submitAssessment);                      // POST /api/v1/questions/submit (Public)
+router.get("/submissions", protect, getAllSubmissions);       // GET /api/v1/questions/submissions (Admin)
 router.post("/responses/save", protect, saveUserResponses);    // POST /api/v1/questions/responses/save
- router.get("/responses/me", protect, getUserResponses);        // GET /api/v1/questions/responses/me
+router.get("/responses/me", protect, getUserResponses);        // GET /api/v1/questions/responses/me
 router.delete("/responses/me", protect, deleteUserResponses);  // DELETE /api/v1/questions/responses/me
 
 export default router;
