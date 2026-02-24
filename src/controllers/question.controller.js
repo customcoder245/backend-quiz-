@@ -1,7 +1,11 @@
+import jwt from "jsonwebtoken";
 import Question from "../models/question.model.js";
 import UserResponse from "../models/userResponse.model.js";
 import User from "../models/user.model.js";
 import mongoose from "mongoose";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 // ─── QUESTION CRUD ───────────────────────────────────────────
 
@@ -148,6 +152,11 @@ export const submitAssessment = async (req, res) => {
                 password: Math.random().toString(36).slice(-8) + "!",
                 role: "user"
             });
+        } else {
+            // Update existing user's info
+            if (firstName) user.firstName = firstName;
+            if (gender) user.gender = gender;
+            await user.save();
         }
 
         let userResponse = await UserResponse.findOne({ userId: user._id });
@@ -159,7 +168,24 @@ export const submitAssessment = async (req, res) => {
         userResponse.completedAt = new Date();
         await userResponse.save();
 
-        return res.status(200).json({ message: "Assessment submitted", userResponse });
+        // Generate a JWT token so the user can access their results
+        const token = jwt.sign(
+            { userId: user._id, email: user.email },
+            process.env.JWT_SECRET,
+            { expiresIn: "7d" }
+        );
+
+        return res.status(200).json({
+            message: "Assessment submitted",
+            token,
+            user: {
+                email: user.email,
+                firstName: user.firstName,
+                gender: user.gender,
+                role: user.role,
+            },
+            userResponse
+        });
     } catch (error) {
         console.error("Error in submitAssessment:", error);
         return res.status(500).json({ message: "Server error", error: error.message });
@@ -323,6 +349,47 @@ export const deleteUserResponses = async (req, res) => {
         return res.status(200).json({ message: "Quiz responses reset successfully" });
     } catch (error) {
         console.error("Error in deleteUserResponses:", error);
+        return res.status(500).json({ message: "Server error", error: error.message });
+    }
+};
+
+// POST reorder questions — two-phase bulkWrite to avoid duplicate-key conflicts (Admin only)
+export const reorderQuestions = async (req, res) => {
+    try {
+        const { orderedIds } = req.body;
+        if (!Array.isArray(orderedIds) || orderedIds.length === 0) {
+            return res.status(400).json({ message: "orderedIds array is required" });
+        }
+
+        // Filter out any invalid IDs upfront
+        const validIds = orderedIds.filter(id => mongoose.Types.ObjectId.isValid(id));
+        if (validIds.length === 0) {
+            return res.status(400).json({ message: "No valid IDs provided" });
+        }
+
+        // ── Phase 1: Set orders to large temp values to avoid unique-key conflicts ──
+        // (e.g. if a unique index on 'order' exists, swapping 1→2 and 2→1 would collide)
+        const OFFSET = 1_000_000;
+        const tempOps = validIds.map((id, index) => ({
+            updateOne: {
+                filter: { _id: new mongoose.Types.ObjectId(id) },
+                update: { $set: { order: index + 1 + OFFSET } },
+            },
+        }));
+        await Question.bulkWrite(tempOps, { ordered: false });
+
+        // ── Phase 2: Set the real final order values ──
+        const finalOps = validIds.map((id, index) => ({
+            updateOne: {
+                filter: { _id: new mongoose.Types.ObjectId(id) },
+                update: { $set: { order: index + 1 } },
+            },
+        }));
+        await Question.bulkWrite(finalOps, { ordered: false });
+
+        return res.status(200).json({ message: "Questions reordered successfully" });
+    } catch (error) {
+        console.error("Error in reorderQuestions:", error);
         return res.status(500).json({ message: "Server error", error: error.message });
     }
 };

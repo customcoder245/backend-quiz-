@@ -4,6 +4,7 @@ const optionSchema = new Schema(
     {
         text: { type: String, required: true },
         emoji: { type: String, default: "" },
+        score: { type: Number, default: 0 }
     },
     { _id: false }
 );
@@ -47,6 +48,14 @@ const questionSchema = new Schema(
             type: Boolean,
             default: true,
         },
+        classid: {
+            type: String,
+            default: ""
+        },
+        attributeId: {
+            type: String,
+            default: ""
+        }
     },
     { timestamps: true, collection: "questions" }
 );

@@ -11,6 +11,7 @@ import {
     deleteUserResponses,
     getAllSubmissions,
     getDashboardStats,
+    reorderQuestions,
 } from "../controllers/question.controller.js";
 import { protect } from "../middlewares/auth.middleware.js";
 
@@ -23,6 +24,9 @@ router.get("/stats", protect, getDashboardStats);                // GET /api/v1/
 router.post("/responses/save", protect, saveUserResponses);    // POST /api/v1/questions/responses/save
 router.get("/responses/me", protect, getUserResponses);        // GET /api/v1/questions/responses/me
 router.delete("/responses/me", protect, deleteUserResponses);  // DELETE /api/v1/questions/responses/me
+
+// ─── QUESTION REORDER ─────────────────────────────────────────
+router.post("/reorder", protect, reorderQuestions);            // POST /api/v1/questions/reorder (Admin)
 
 // ─── QUESTION CRUD ───────────────────────────────────────────
 router.get("/", getAllQuestions);            // GET /api/v1/questions (Public)
