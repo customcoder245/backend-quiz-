@@ -30,7 +30,7 @@ const userResponseSchema = new Schema(
             default: null,
         },
     },
-    { timestamps: true }
+    { timestamps: true, collection: "userresponses" }
 );
 
 export default mongoose.model("UserResponse", userResponseSchema);

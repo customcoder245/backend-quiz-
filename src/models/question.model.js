@@ -48,7 +48,7 @@ const questionSchema = new Schema(
             default: true,
         },
     },
-    { timestamps: true }
+    { timestamps: true, collection: "questions" }
 );
 
 export default mongoose.model("Question", questionSchema);

@@ -1,6 +1,7 @@
 import Question from "../models/question.model.js";
 import UserResponse from "../models/userResponse.model.js";
 import User from "../models/user.model.js";
+import mongoose from "mongoose";
 
 // ─── QUESTION CRUD ───────────────────────────────────────────
 
@@ -173,19 +174,143 @@ export const getAllSubmissions = async (req, res) => {
             .populate("responses.questionId", "questionText")
             .sort({ createdAt: -1 });
 
-        const formattedSubmissions = submissions.map((sub) => ({
-            id: sub._id,
-            name: sub.userId?.firstName || "Guest",
-            email: sub.userId?.email || "N/A",
-            gender: sub.userId?.gender || "N/A",
-            date: sub.completedAt ? new Date(sub.completedAt).toLocaleDateString() : "In Progress",
-            questions: sub.responses.map(r => r.questionId?.questionText).filter(Boolean).slice(0, 2).join(", ") + "...",
-            selectedOptions: sub.responses.map(r => Array.isArray(r.answer) ? r.answer.join(", ") : r.answer).slice(0, 2).join(" | ") + "...",
-        }));
+        console.log(`Found ${submissions.length} raw submissions in DB`);
+        if (submissions.length > 0) {
+            console.log("First submission example:", JSON.stringify(submissions[0], null, 2));
+        }
 
-        return res.status(200).json({ submissions: formattedSubmissions });
+        const formattedSubmissions = submissions.map((sub, index) => {
+            try {
+                if (!sub) return null;
+                const responses = sub.responses || [];
+                const validResponses = responses.filter(r => r && typeof r === 'object');
+                const responseCount = validResponses.length;
+
+                const firstThreeQuestions = validResponses
+                    .slice(0, 3)
+                    .map(r => r.questionId?.questionText || "Deleted Question")
+                    .join(", ");
+
+                const summary = responseCount > 3
+                    ? `${firstThreeQuestions}... (+${responseCount - 3} more)`
+                    : firstThreeQuestions || "No questions answered";
+
+                return {
+                    id: sub._id,
+                    name: sub.userId?.firstName || "Guest",
+                    email: sub.userId?.email || "N/A",
+                    gender: sub.userId?.gender || "N/A",
+                    date: sub.completedAt ? new Date(sub.completedAt).toLocaleDateString() : "In Progress",
+                    questions: summary,
+                    responseCount,
+                    selectedOptions: validResponses
+                        .slice(0, 3)
+                        .map(r => {
+                            if (!r || r.answer == null) return "";
+                            return Array.isArray(r.answer) ? r.answer.join(", ") : String(r.answer);
+                        })
+                        .join(" | ") + (responseCount > 3 ? "..." : ""),
+                    fullResponses: validResponses.map(r => ({
+                        question: r.questionId?.questionText || "Deleted Question",
+                        answer: r.answer != null ? (Array.isArray(r.answer) ? r.answer.join(", ") : String(r.answer)) : ""
+                    }))
+                };
+            } catch (err) {
+                console.error(`Error formatting submission at index ${index}:`, err);
+                return {
+                    id: sub?._id || "error",
+                    name: "Error Loading",
+                    email: "N/A",
+                    gender: "N/A",
+                    date: "N/A",
+                    questions: "Data formatting error",
+                    responseCount: 0,
+                    selectedOptions: "N/A",
+                    fullResponses: []
+                };
+            }
+        }).filter(Boolean);
+
+        return res.status(200).json({
+            submissions: formattedSubmissions,
+            debug: {
+                rawCount: submissions.length,
+                dbConnected: mongoose.connection.readyState === 1
+            }
+        });
     } catch (error) {
         console.error("Error in getAllSubmissions:", error);
+        return res.status(500).json({ message: "Server error", error: error.message });
+    }
+};
+
+// GET dashboard statistics (Admin only)
+export const getDashboardStats = async (req, res) => {
+    try {
+        const totalSubmissions = await UserResponse.countDocuments();
+        const completedSubmissions = await UserResponse.countDocuments({ completedAt: { $ne: null } });
+        const totalUsers = await User.countDocuments({ role: 'user' });
+
+        // Calculate completion rate
+        const completionRate = totalSubmissions > 0
+            ? ((completedSubmissions / totalSubmissions) * 100).toFixed(1)
+            : 0;
+
+        // Recently completed (last 7 days)
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        const recentSubmissionsCount = await UserResponse.countDocuments({
+            createdAt: { $gte: sevenDaysAgo }
+        });
+
+        // Gender distribution
+        const femaleCount = await User.countDocuments({ role: 'user', gender: 'female' });
+        const maleCount = await User.countDocuments({ role: 'user', gender: 'male' });
+        const otherCount = await User.countDocuments({ role: 'user', gender: 'other' });
+
+        const totalWithGender = femaleCount + maleCount + otherCount;
+        const genderStats = {
+            female: totalWithGender > 0 ? Math.round((femaleCount / totalWithGender) * 100) : 0,
+            male: totalWithGender > 0 ? Math.round((maleCount / totalWithGender) * 100) : 0,
+            other: totalWithGender > 0 ? Math.round((otherCount / totalWithGender) * 100) : 0,
+        };
+
+        // Last 7 days trend for the bar chart
+        const last7Days = [];
+        for (let i = 6; i >= 0; i--) {
+            const date = new Date();
+            date.setDate(date.getDate() - i);
+            date.setHours(0, 0, 0, 0);
+
+            const nextDate = new Date(date);
+            nextDate.setDate(nextDate.getDate() + 1);
+
+            const count = await UserResponse.countDocuments({
+                updatedAt: {
+                    $gte: date,
+                    $lt: nextDate
+                }
+            });
+
+            last7Days.push({
+                day: date.toLocaleDateString('en-US', { weekday: 'short' }),
+                count
+            });
+        }
+
+        return res.status(200).json({
+            stats: {
+                totalSubmissions,
+                completedSubmissions,
+                totalUsers,
+                completionRate: `${completionRate}%`,
+                recentSubmissionsCount,
+                genderStats,
+                last7Days
+            }
+        });
+    } catch (error) {
+        console.error("Error in getDashboardStats:", error);
         return res.status(500).json({ message: "Server error", error: error.message });
     }
 };
