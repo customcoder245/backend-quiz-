@@ -12,12 +12,17 @@ dotenv.config();
 // GET all questions (optionally filter by gender)
 export const getAllQuestions = async (req, res) => {
     try {
-        const { gender, includeInactive } = req.query;
+        const { gender, includeInactive, isPopup } = req.query;
         const filter = includeInactive === 'true' ? {} : { isActive: true };
 
         if (gender && gender !== 'all' && gender !== 'both') {
             filter.$or = [{ gender: "both" }, { gender }];
         }
+
+        if (isPopup !== undefined) {
+            filter.isPopup = isPopup === 'true';
+        }
+
         const questions = await Question.find(filter).sort({ order: 1 });
         return res.status(200).json({ questions });
     } catch (error) {
