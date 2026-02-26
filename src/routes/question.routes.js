@@ -6,6 +6,7 @@ import {
     updateQuestion,
     deleteQuestion,
     saveUserResponses,
+    appendUserResponse,
     submitAssessment,
     getUserResponses,
     deleteUserResponses,
@@ -22,6 +23,7 @@ router.post("/submit", submitAssessment);                      // POST /api/v1/q
 router.get("/submissions", protect, getAllSubmissions);        // GET /api/v1/questions/submissions (Admin)
 router.get("/stats", protect, getDashboardStats);                // GET /api/v1/questions/stats (Admin)
 router.post("/responses/save", protect, saveUserResponses);    // POST /api/v1/questions/responses/save
+router.post("/responses/append", protect, appendUserResponse); // POST /api/v1/questions/responses/append
 router.get("/responses/me", protect, getUserResponses);        // GET /api/v1/questions/responses/me
 router.delete("/responses/me", protect, deleteUserResponses);  // DELETE /api/v1/questions/responses/me
 

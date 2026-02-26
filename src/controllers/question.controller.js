@@ -122,6 +122,32 @@ export const saveUserResponses = async (req, res) => {
     }
 };
 
+// POST append single response dynamically
+export const appendUserResponse = async (req, res) => {
+    try {
+        const userId = req.user.userId;
+        const { questionId, answer } = req.body;
+
+        const userResponse = await UserResponse.findOne({ userId });
+        if (!userResponse) {
+            return res.status(404).json({ message: "No responses found for this user" });
+        }
+
+        const existingIndex = userResponse.responses.findIndex(r => r.questionId.toString() === questionId);
+        if (existingIndex >= 0) {
+            userResponse.responses[existingIndex].answer = answer;
+        } else {
+            userResponse.responses.push({ questionId, answer });
+        }
+
+        await userResponse.save();
+        return res.status(200).json({ message: "Response appended", userResponse });
+    } catch (error) {
+        console.error("Error in appendUserResponse:", error);
+        return res.status(500).json({ message: "Server error", error: error.message });
+    }
+};
+
 // GET logged-in user's responses
 export const getUserResponses = async (req, res) => {
     try {
