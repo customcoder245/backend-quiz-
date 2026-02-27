@@ -167,7 +167,7 @@ export const getUserResponses = async (req, res) => {
 // POST public submission of assessment
 export const submitAssessment = async (req, res) => {
     try {
-        const { email, firstName, responses, gender } = req.body;
+        const { email, firstName, responses, gender, bmi } = req.body;
 
         if (!email) {
             return res.status(400).json({ message: "Email is required" });
@@ -196,6 +196,7 @@ export const submitAssessment = async (req, res) => {
         }
 
         userResponse.responses = responses;
+        if (bmi) userResponse.bmi = bmi;
         userResponse.completedAt = new Date();
         await userResponse.save();
 

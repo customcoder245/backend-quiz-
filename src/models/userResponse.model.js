@@ -25,6 +25,10 @@ const userResponseSchema = new Schema(
             unique: true, // one quiz response per user
         },
         responses: [answerSchema],
+        bmi: {
+            type: Number,
+            required: false,
+        },
         completedAt: {
             type: Date,
             default: null,
